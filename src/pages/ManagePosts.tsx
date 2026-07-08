@@ -486,7 +486,7 @@ export default function ManagePosts({ user, onBack }: ManagePostsProps) {
                       {post.category}
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono">
-                      {new Date(post.createdAt).toLocaleDateString()}
+                      {new Date(post.createdAt).toLocaleDateString('en-US')}
                     </span>
                   </div>
                   <h3 className="text-sm font-semibold text-white truncate">{post.title}</h3>
