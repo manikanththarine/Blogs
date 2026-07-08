@@ -1,0 +1,10 @@
+{
+  "name": "Blog Website",
+  "description": "A dynamic, full-stack blog website featuring daily news, song lyrics, sports, and technology sections with user accounts, custom content creation, geolocation strategies, and dark mode.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
