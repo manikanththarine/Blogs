@@ -421,8 +421,12 @@ export async function createApp() {
     }
   });
 
-  // Vite middleware (dev) / SSR rendering (dev + prod) setup
-  if (process.env.NODE_ENV !== "production") {
+  // Vite middleware (dev) / SSR rendering (dev + prod) setup.
+  // Vercel doesn't reliably set NODE_ENV for custom Node functions, but it always
+  // sets VERCEL=1, so treat that as production too (the dev branch below reads
+  // source files that are never bundled into the deployed function).
+  const isProduction = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "custom",
