@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/blogportal";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/blogportal";
 
 // Cached across invocations so warm serverless instances (Vercel) reuse the
 // same connection instead of opening a new one per request.
@@ -9,7 +9,7 @@ let connectionPromise: Promise<typeof mongoose> | null = null;
 export function connectDB() {
   if (!connectionPromise) {
     connectionPromise = mongoose
-      .connect(MONGO_URI)
+      .connect(MONGODB_URI)
       .then((conn) => {
         console.log(`MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
         return conn;
