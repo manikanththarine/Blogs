@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/blogportal";
+const MONGODB_URI = "mongodb://Vercel-Admin-Blogspost:cEQizeVXVA8DG2rs@ac-toridw7-shard-00-00.msdramu.mongodb.net:27017,ac-toridw7-shard-00-01.msdramu.mongodb.net:27017,ac-toridw7-shard-00-02.msdramu.mongodb.net:27017/?ssl=true&replicaSet=atlas-huwl8v-shard-0&authSource=admin&appName=Blogspost";
 
 // Cached across invocations so warm serverless instances (Vercel) reuse the
 // same connection instead of opening a new one per request.
