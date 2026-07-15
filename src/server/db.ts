@@ -13,7 +13,7 @@ import {
   ActivityLogModel,
   ContactMessageModel,
   NewsletterSubscriberModel,
-} from './models';
+} from './models.js';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 

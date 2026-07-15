@@ -5,7 +5,7 @@
 
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { db } from './db';
+import { db } from './db.js';
 import { User, UserRole, BlogPost, PostStatus } from '../types';
 
 const JWT_SECRET = process.env.JWT_SECRET;
