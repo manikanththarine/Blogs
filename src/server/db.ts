@@ -15,15 +15,35 @@ import {
   NewsletterSubscriberModel,
 } from './models';
 
-const MONGODB_URI = process.env.MONGODB_URI||"mongodb://Vercel-Admin-Blogspost:cEQizeVXVA8DG2rs@ac-toridw7-shard-00-00.msdramu.mongodb.net:27017,ac-toridw7-shard-00-01.msdramu.mongodb.net:27017,ac-toridw7-shard-00-02.msdramu.mongodb.net:27017/blogcms?ssl=true&replicaSet=atlas-huwl8v-shard-0&authSource=admin&appName=Blogspost";
+const MONGODB_URI = "mongodb://Vercel-Admin-Blogspost:cEQizeVXVA8DG2rs@ac-toridw7-shard-00-00.msdramu.mongodb.net:27017,ac-toridw7-shard-00-01.msdramu.mongodb.net:27017,ac-toridw7-shard-00-02.msdramu.mongodb.net:27017/blogcms?ssl=true&replicaSet=atlas-huwl8v-shard-0&authSource=admin&appName=Blogspost";
 
 if (!MONGODB_URI) {
   throw new Error('MONGODB_URI environment variable is not set. Copy .env.example to .env and fill in your MongoDB connection string.');
 }
 
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// Cache the connection across invocations so serverless platforms (Vercel)
+// reuse it between function calls instead of opening a new one each time.
+declare global {
+  var _mongooseConn: Promise<typeof mongoose> | undefined;
+}
+
+function getConnection(): Promise<typeof mongoose> {
+  if (!global._mongooseConn) {
+    global._mongooseConn = mongoose.connect(MONGODB_URI as string)
+      .then((m) => {
+        console.log('Connected to MongoDB');
+        return m;
+      })
+      .catch((err) => {
+        console.error('MongoDB connection error:', err);
+        global._mongooseConn = undefined;
+        throw err;
+      });
+  }
+  return global._mongooseConn;
+}
+
+getConnection();
 
 function genId(prefix: string): string {
   return `${prefix}_` + Math.random().toString(36).substr(2, 9);
