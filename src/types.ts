@@ -1,70 +1,95 @@
-export type BlogCategory = 'news' | 'lyrics' | 'sports' | 'tech';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-export interface UserPreferences {
-  categories: BlogCategory[];
-  theme: 'light' | 'dark';
-  region: string;
-}
+export type UserRole = 'Admin' | 'Editor' | 'Author' | 'Viewer';
 
 export interface User {
   id: string;
-  username: string;
+  name: string;
   email: string;
-  role?: 'user' | 'admin';
-  preferences: UserPreferences;
+  role: UserRole;
+  avatar?: string;
   createdAt: string;
 }
 
-export interface NewsMetadata {
-  source: string;
-  importance: 'high' | 'medium' | 'low';
-}
+export type PostStatus = 'Draft' | 'Published' | 'Archived';
 
-export interface LyricsMetadata {
-  artist: string;
-  songTitle: string;
-  album?: string;
-}
-
-export interface SportsMetadata {
-  sportType: string;
-  teamNames: string[];
-  score?: string;
-}
-
-export interface TechMetadata {
-  techStack: string[];
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+export interface SEOMetadata {
+  metaTitle: string;
+  metaDescription: string;
+  keywords: string[];
+  ogTitle: string;
+  ogDescription: string;
+  ogImage: string;
+  twitterCard: 'summary' | 'summary_large_image';
 }
 
 export interface BlogPost {
   id: string;
   title: string;
-  content: string;
-  category: BlogCategory;
-  author: {
-    id: string;
-    username: string;
-  };
+  slug: string;
+  featuredImage: string;
+  category: 'Songs' | 'News' | 'Sports' | 'General Knowledge';
   tags: string[];
+  richTextContent: string;
+  authorId: string;
+  authorName: string;
+  authorRole: UserRole;
+  publicationDate: string;
+  lastUpdatedDate: string;
+  readTime: number; // in minutes
+  seoMetadata: SEOMetadata;
+  status: PostStatus;
+  featuredPostOption: boolean;
+  relatedPosts: string[]; // array of blog post IDs
+  likes: string[]; // array of user IDs
   views: number;
-  likes: string[]; // List of user IDs who liked it
-  createdAt: string;
-  newsMetadata?: NewsMetadata;
-  lyricsMetadata?: LyricsMetadata;
-  sportsMetadata?: SportsMetadata;
-  techMetadata?: TechMetadata;
 }
 
-export interface ContactSubmission {
+export interface BlogComment {
+  id: string;
+  postId: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  content: string;
+  createdAt: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  action: string; // 'CREATE_POST', 'UPDATE_POST', 'DELETE_POST', 'REGISTER_USER', 'ROLE_CHANGE', etc.
+  targetId?: string;
+  targetType?: string; // 'POST', 'USER', 'COMMENT'
+  timestamp: string;
+}
+
+export interface DashboardStats {
+  totalViews: number;
+  totalPosts: number;
+  totalUsers: number;
+  totalLikes: number;
+  categoryBreakdown: Record<string, number>;
+  viewsHistory: { date: string; views: number }[];
+  popularPosts: { id: string; title: string; views: number; likesCount: number }[];
+}
+
+export interface ContactMessage {
+  id: string;
   name: string;
   email: string;
   subject: string;
   message: string;
+  createdAt: string;
 }
 
-export interface SearchFilter {
-  query: string;
-  category: BlogCategory | 'all';
-  tag?: string;
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  subscribedAt: string;
 }

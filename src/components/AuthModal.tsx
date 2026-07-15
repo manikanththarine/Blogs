@@ -1,217 +1,270 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState } from 'react';
-import { X, Mail, Lock, User as UserIcon, Globe, Check } from 'lucide-react';
-import { User, BlogCategory, UserPreferences } from '../types';
+import { X, Shield, Lock, Mail, User as UserIcon, Sparkles, AlertCircle } from 'lucide-react';
+import { User, UserRole } from '../types';
 
 interface AuthModalProps {
-  isOpen: boolean;
   onClose: () => void;
-  onAuthSuccess: (user: User) => void;
+  onAuthSuccess: (token: string, user: User) => void;
 }
 
-export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
+export default function AuthModal({ onClose, onAuthSuccess }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedCats, setSelectedCats] = useState<BlogCategory[]>(['news', 'lyrics', 'sports', 'tech']);
-  const [region, setRegion] = useState('Global');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  if (!isOpen) return null;
-
-  const toggleCategory = (cat: BlogCategory) => {
-    if (selectedCats.includes(cat)) {
-      setSelectedCats(selectedCats.filter(c => c !== cat));
-    } else {
-      setSelectedCats([...selectedCats, cat]);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    if (loading) return;
+
     setLoading(true);
+    setError('');
 
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-    const body = isLogin 
-      ? { email, password }
-      : { 
-          username, 
-          email, 
-          password, 
-          preferences: { 
-            categories: selectedCats, 
-            theme: 'dark', 
-            region 
-          } 
-        };
+    const payload = isLogin ? { email, password } : { name, email, password };
 
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Authentication failed');
+        throw new Error(data.error || 'Authentication failed. Please verify inputs.');
       }
 
-      onAuthSuccess(data);
+      onAuthSuccess(data.token, data.user);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'An error occurred during authentication');
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Quick Login Utility for Reviewers / Admins to test different roles instantly
+  const handleQuickLogin = async (role: UserRole) => {
+    setLoading(true);
+    setError('');
+
+    const credentials: Record<UserRole, { u: string; p: string }> = {
+      Admin: { u: 'admin@example.com', p: 'admin123' },
+      Editor: { u: 'editor@example.com', p: 'editor123' },
+      Author: { u: 'author@example.com', p: 'author123' },
+      Viewer: { u: 'viewer@example.com', p: 'viewer123' },
+    };
+
+    const cred = credentials[role];
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cred.u, password: cred.p }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      onAuthSuccess(data.token, data.user);
+      onClose();
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-850 p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-          id="close-auth-modal"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" id="authentication-portal-modal">
+      {/* Dark overlay backdrop */}
+      <div 
+        className="absolute inset-0 bg-stone-900/60 backdrop-blur-xs transition-opacity" 
+        onClick={onClose} 
+      />
 
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-55 animate-pulse-slow">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            {isLogin ? 'Sign in to publish your articles and manage preferences' : 'Join our creative writing hub today'}
-          </p>
+      {/* Main card box container */}
+      <div className="relative bg-white border border-stone-200 rounded-md shadow-2xl w-full max-w-md overflow-hidden animate-scaleIn z-10">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-stone-50">
+          <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-stone-500 uppercase tracking-widest">
+            <Lock size={12} className="text-stone-700" />
+            <span>Scribe Security Portal</span>
+          </div>
+          <button 
+            type="button"
+            onClick={onClose}
+            className="p-1 text-stone-400 hover:text-stone-800 rounded transition cursor-pointer"
+            title="Close panel"
+          >
+            <X size={15} />
+          </button>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 text-xs text-red-600 dark:text-red-400 font-medium border border-red-100 dark:border-red-900/30">
-            {error}
+        {/* Auth Body */}
+        <div className="p-6 space-y-5 max-h-[85vh] overflow-y-auto">
+          <div className="text-center space-y-1.5">
+            <h3 className="text-lg font-serif font-bold text-stone-950">
+              {isLogin ? 'Sign in to Scribe' : 'Create an Account'}
+            </h3>
+            <p className="text-[11px] text-stone-500 font-light">
+              {isLogin ? 'Manage resources and write publications' : 'Become a reader and join our discussion boards'}
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div>
-              <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1">Username</label>
+          {error && (
+            <div className="p-3 bg-stone-50 border border-stone-200 rounded-sm text-xs text-stone-700 font-mono flex items-start gap-2">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            {!isLogin && (
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono font-bold text-stone-500 uppercase tracking-widest">Full Name</label>
+                <div className="relative">
+                  <UserIcon size={13} className="absolute left-3.5 top-3.5 text-stone-400" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full text-xs pl-10 pr-4 py-3 border border-stone-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-stone-950 bg-stone-50/50 text-stone-900 font-mono"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-[9px] font-mono font-bold text-stone-500 uppercase tracking-widest">Email Address</label>
               <div className="relative">
-                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Mail size={13} className="absolute left-3.5 top-3.5 text-stone-400" />
                 <input
-                  type="text"
+                  type="email"
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition-all"
-                  placeholder="alex_writer"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full text-xs pl-10 pr-4 py-3 border border-stone-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-stone-950 bg-stone-50/50 text-stone-900 font-mono"
                 />
               </div>
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition-all"
-                placeholder="you@domain.com"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-transparent transition-all"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          {/* Preferences for Registration */}
-          {!isLogin && (
-            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5">Favorite Categories</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['news', 'lyrics', 'sports', 'tech'] as BlogCategory[]).map(cat => {
-                    const active = selectedCats.includes(cat);
-                    return (
-                      <button
-                        type="button"
-                        key={cat}
-                        onClick={() => toggleCategory(cat)}
-                        className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs capitalize font-medium transition-all ${
-                          active 
-                            ? 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                            : 'bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                        }`}
-                      >
-                        {cat}
-                        {active && <Check className="w-3.5 h-3.5" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1">Default Region Filter</label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                  <select
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            <div className="space-y-1">
+              <div className="flex justify-between items-center">
+                <label className="text-[9px] font-mono font-bold text-stone-500 uppercase tracking-widest">Password</label>
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={() => alert('Password reset links are simulated. You can login using our Quick Login buttons below.')}
+                    className="text-[9px] font-mono font-bold text-stone-600 hover:text-stone-950 transition uppercase tracking-wider"
                   >
-                    <option value="Global">Global Region</option>
-                    <option value="North America">North America</option>
-                    <option value="Europe">Europe</option>
-                    <option value="Asia">Asia (India Subcontinent)</option>
-                    <option value="Australia">Australia Grid</option>
-                  </select>
-                </div>
+                    Forgot?
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <Lock size={13} className="absolute left-3.5 top-3.5 text-stone-400" />
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full text-xs pl-10 pr-4 py-3 border border-stone-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-stone-950 bg-stone-50/50 text-stone-900"
+                />
               </div>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 font-semibold text-sm transition-all shadow-md active:scale-98 disabled:opacity-50 cursor-pointer"
-            id="auth-submit-btn"
-          >
-            {loading ? 'Processing...' : isLogin ? 'Sign In' : 'Create Account'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-stone-950 hover:bg-stone-800 disabled:bg-stone-300 text-white font-mono font-bold uppercase tracking-widest text-[10px] rounded-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : null}
+              <span>{isLogin ? 'Sign In' : 'Create Reader Account'}</span>
+            </button>
+          </form>
 
-        <div className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-          {isLogin ? "Don't have an account yet? " : "Already have an account? "}
-          <button 
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-            }}
-            className="text-emerald-500 dark:text-emerald-400 font-semibold hover:underline cursor-pointer"
-            id="toggle-auth-mode"
-          >
-            {isLogin ? 'Sign Up' : 'Sign In'}
-          </button>
+          {/* Switch toggle */}
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+              }}
+              className="text-[11px] text-stone-500 hover:text-stone-950 font-mono font-semibold uppercase tracking-wider underline underline-offset-4 cursor-pointer"
+            >
+              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+            </button>
+          </div>
+
+          {/* Quick Login - RBAC Testing Framework */}
+          <div className="border-t border-stone-200 pt-5 space-y-3">
+            <div className="flex items-center gap-1 text-[9px] font-mono font-bold text-stone-400 uppercase tracking-widest">
+              <Sparkles size={11} className="text-amber-500 fill-amber-500" />
+              <span>Developer Quick-Login</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('Admin')}
+                className="p-3 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-sm text-left flex flex-col gap-0.5 transition cursor-pointer"
+              >
+                <span className="text-[10px] font-mono font-bold text-stone-900 uppercase tracking-wider">Admin Role</span>
+                <span className="text-[8px] text-stone-400 font-mono uppercase">Full access control</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('Editor')}
+                className="p-3 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-sm text-left flex flex-col gap-0.5 transition cursor-pointer"
+              >
+                <span className="text-[10px] font-mono font-bold text-stone-900 uppercase tracking-wider">Editor Role</span>
+                <span className="text-[8px] text-stone-400 font-mono uppercase">Modify & Publish</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('Author')}
+                className="p-3 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-sm text-left flex flex-col gap-0.5 transition cursor-pointer"
+              >
+                <span className="text-[10px] font-mono font-bold text-stone-900 uppercase tracking-wider">Author Role</span>
+                <span className="text-[8px] text-stone-400 font-mono uppercase">Draft own posts</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('Viewer')}
+                className="p-3 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-sm text-left flex flex-col gap-0.5 transition cursor-pointer"
+              >
+                <span className="text-[10px] font-mono font-bold text-stone-900 uppercase tracking-wider">Viewer Role</span>
+                <span className="text-[8px] text-stone-400 font-mono uppercase">Read & Comment</span>
+              </button>
+            </div>
+            <p className="text-[9px] text-stone-400 font-mono uppercase tracking-wide text-center leading-normal">
+              Assumption of credential badges.
+            </p>
+          </div>
         </div>
       </div>
     </div>
