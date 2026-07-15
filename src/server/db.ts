@@ -15,7 +15,7 @@ import {
   NewsletterSubscriberModel,
 } from './models';
 
-const MONGODB_URI = "mongodb://Vercel-Admin-Blogspost:cEQizeVXVA8DG2rs@ac-toridw7-shard-00-00.msdramu.mongodb.net:27017,ac-toridw7-shard-00-01.msdramu.mongodb.net:27017,ac-toridw7-shard-00-02.msdramu.mongodb.net:27017/blogcms?ssl=true&replicaSet=atlas-huwl8v-shard-0&authSource=admin&appName=Blogspost";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error('MONGODB_URI environment variable is not set. Copy .env.example to .env and fill in your MongoDB connection string.');
