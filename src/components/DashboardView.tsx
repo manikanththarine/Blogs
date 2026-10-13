@@ -387,7 +387,7 @@ export default function DashboardView({ user, token }: DashboardViewProps) {
                   <tbody className="divide-y divide-stone-100">
                     {posts.length > 0 ? (
                       posts.map((post) => {
-                        const canModify = user.role === 'Admin' || post.authorId === user.id;
+                        const canModify = user.role === 'Admin' || user.role === 'Editor' || post.authorId === user.id;
                         return (
                           <tr key={post.id} className="hover:bg-stone-50/50 transition">
                             <td className="py-3.5 px-4 max-w-xs md:max-w-md">
@@ -433,7 +433,7 @@ export default function DashboardView({ user, token }: DashboardViewProps) {
                                 <button
                                   type="button"
                                   onClick={() => handleDeletePost(post.id)}
-                                  disabled={user.role !== 'Admin' && (!canModify || user.role === 'Author')}
+                                  disabled={user.role !== 'Admin' && user.role !== 'Editor'}
                                   className="p-1.5 border border-stone-200 rounded-sm bg-stone-100 hover:bg-stone-200 text-stone-800 disabled:opacity-40 transition cursor-pointer"
                                   title="Delete post"
                                 >

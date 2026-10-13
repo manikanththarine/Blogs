@@ -275,10 +275,8 @@ class MongoDatabase {
     }
 
     // Check permissions
-    if (operator.role === 'Admin') {
+    if (operator.role === 'Admin' || operator.role === 'Editor') {
       // full access
-    } else if (operator.role === 'Editor' && post.authorId === operator.id) {
-      // Editor can delete own posts
     } else {
       throw new Error('You do not have permission to delete this post');
     }
